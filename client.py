@@ -44,48 +44,54 @@ class Client(BaseClient):
         uid = self.resolve(path_join(self.username, name))
         symmetric_key = self.crypto.get_random_bytes(32)
         try:
-        	asymmetric_key = self.crypto.asymmetric_encrypt(symmetric_key, self.private_key.publickey())
+            asymmetric_key = self.crypto.asymmetric_encrypt(symmetric_key, self.private_key.publickey())
         except:
-        	raise IntegrityError()
+            raise IntegrityError()
         if self.storage_server.get(self.username) is not None:
-        	asymmetric_key = self.storage_server.get(self.username)
-        	try:
-        		symmetric_key = self.crypto.asymmetric_decrypt(asymmetric_key, self.private_key)
-        	except:
-        		raise IntegrityError()
+            asymmetric_key = self.storage_server.get(self.username)
+            try:
+                symmetric_key = self.crypto.asymmetric_decrypt(asymmetric_key, self.private_key)
+            except:
+                raise IntegrityError()
         else:
-        	self.storage_server.put(self.username, asymmetric_key)
+            self.storage_server.put(self.username, asymmetric_key)
         try:
-        	encrypted_name = self.crypto.symmetric_encrypt(uid, symmetric_key, 'AES')
+            encrypted_name = self.crypto.symmetric_encrypt(uid, symmetric_key, 'AES')
+            encrypted_name = util.to_json_string(encrypted_name)
         except:
-        	raise IntegrityError()
-
-        self.storage_server.put(encrypted_name, "[DATA] " + value)
+            raise IntegrityError()
+        try:
+            value = self.crypto.symmetric_encrypt(value, symmetric_key, 'AES')
+        except:
+            raise IntegrityError()
+        self.storage_server.put(encrypted_name, value)
         # raise NotImplementedError
 
     def download(self, name):
         # Replace with your implementation
         uid = self.resolve(path_join(self.username, name))
         if self.storage_server.get(self.username) is None:
-        	return None
+            return None
         else: 
-        	asymmetric_key = self.storage_server.get(self.username)
-        	try:
-        		symmetric_key = self.crypto.asymmetric_decrypt(asymmetric_key, self.private_key)
-        	except:
-        		raise IntegrityError()
-
+            asymmetric_key = self.storage_server.get(self.username)
+            try:
+                symmetric_key = self.crypto.asymmetric_decrypt(asymmetric_key, self.private_key)
+            except:
+                raise IntegrityError()
         try:
-        	encrypted_name = self.crypto.symmetric_encrypt(uid, symmetric_key, 'AES')
+            encrypted_name = self.crypto.symmetric_encrypt(uid, symmetric_key, 'AES')
+            encrypted_name = util.to_json_string(encrypted_name)
         except:
-        	raise IntegrityError()
-
-
+            raise IntegrityError()
         resp = self.storage_server.get(encrypted_name)
+        try:
+            resp = self.crypto.symmetric_decrypt(resp, symmetric_key, 'AES')
+        except:
+            return None
         if resp is None:
             return None
-        return resp[7:]
-	# raise NotImplementedError
+        return resp
+    # raise NotImplementedError
 
     def share(self, user, name):
         # Replace with your implementation (not needed for Part 1)
