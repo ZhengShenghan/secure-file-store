@@ -41,7 +41,7 @@ class Client(BaseClient):
 
     def upload(self, name, value):
         # Replace with your implementation
-        uid = self.resolve(path_join(self.username, name))
+        uid = self.crypto.cryptographic_hash(self.resolve(path_join(self.username, name)), "SHA256")
         symmetric_key = self.crypto.get_random_bytes(32)
         try:
             asymmetric_key = self.crypto.asymmetric_encrypt(symmetric_key, self.private_key.publickey())
@@ -69,7 +69,7 @@ class Client(BaseClient):
 
     def download(self, name):
         # Replace with your implementation
-        uid = self.resolve(path_join(self.username, name))
+        uid = self.crypto.cryptographic_hash(self.resolve(path_join(self.username, name)), "SHA256")
         if self.storage_server.get(self.username) is None:
             return None
         else: 
