@@ -94,13 +94,31 @@ class Client(BaseClient):
     # raise NotImplementedError
 
     def share(self, user, name):
-        # Replace with your implementation (not needed for Part 1)
-        raise NotImplementedError
+        # # Replace with your implementation (not needed for Part 1)
+        # raise NotImplementedError
+        key = self.storage_server.get(self.username)
+        symmetric_key = self.crypto.asymmetric_decrypt(key, self.private_key)
+        # rsa = asymmetric_encrypt of key and bob's public key
+        rsa = self.crypto.asymmetric_encrypt(symmetric_key, self.pks.get_public_key(user))
+        return (rsa, name)
+
 
     def receive_share(self, from_username, newname, message):
-        # Replace with your implementation (not needed for Part 1)
-        raise NotImplementedError
+        # # Replace with your implementation (not needed for Part 1)
+        # raise NotImplementedError
+        if self.storage_server.get(self.username + "/shared") is None:
+            dictionary = {newname : (message[1], from_username, message[0])}
+        else:
+            dictionary = self.storage_server.get(self.username + "/shared")
+            dictionary[newname] = (message[1], from_username, message[0])
+        self.storage_server.put(self.username + "/shared", util.to_json_string(dictionary))
+
+
+        # my_id = path_join(self.username, newname)
+        # self.storage_server.put(my_id, "[POINTER] " + message)
 
     def revoke(self, user, name):
-        # Replace with your implementation (not needed for Part 1)
-        raise NotImplementedError
+        # # Replace with your implementation (not needed for Part 1)
+        # raise NotImplementedError
+        sharename = path_join(self.username, "sharewith", user, name)
+        self.storage_server.delete(sharename)
